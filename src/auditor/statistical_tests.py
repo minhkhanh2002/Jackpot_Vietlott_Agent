@@ -146,7 +146,7 @@ def hit_rate_by_jackpot_size(
     )
 
 
-def _clean_jackpot1_transition_mask(df: pd.DataFrame, cap: int) -> np.ndarray:
+def clean_jackpot1_transition_mask(df: pd.DataFrame, cap: int) -> np.ndarray:
     """True tại vị trí k nếu đoạn (k -> k+1) là cộng dồn "sạch": không ai trúng Jackpot 1
     hay Jackpot 2 ở cả 2 đầu đoạn, và jackpot1 chưa chạm mốc khoá trần — chỉ những đoạn này
     mới tuân theo công thức cộng dồn tuyến tính đơn giản."""
@@ -172,7 +172,7 @@ def validate_jackpot_split_ratio(df: pd.DataFrame, cap: int = JACKPOT1_CAP) -> S
     d = df.sort_values("draw_date").reset_index(drop=True)
     j1 = d["jackpot1_amount"].to_numpy()
     j2 = d["jackpot2_amount"].to_numpy()
-    clean = _clean_jackpot1_transition_mask(d, cap)
+    clean = clean_jackpot1_transition_mask(d, cap)
 
     inc1 = (j1[1:] - j1[:-1])[clean]
     inc2 = (j2[1:] - j2[:-1])[clean]
@@ -193,13 +193,13 @@ def estimate_tickets_from_jackpot_increment(
     cap: int = JACKPOT1_CAP,
 ) -> pd.DataFrame:
     """Ước lượng số vé bán ra mỗi kỳ từ mức tăng Jackpot1 giữa 2 kỳ liên tiếp (chỉ tính được
-    tại các đoạn "sạch" — xem `_clean_jackpot1_transition_mask`). Trả về DataFrame với
+    tại các đoạn "sạch" — xem `clean_jackpot1_transition_mask`). Trả về DataFrame với
     `draw_date`, `jackpot1_amount` (giá trị ở ĐẦU đoạn — cái thu hút người mua vé kỳ đó),
     `n_tickets_est` (NaN nếu đoạn không "sạch", không ước lượng được).
     """
     d = df.sort_values("draw_date").reset_index(drop=True)
     j1 = d["jackpot1_amount"].to_numpy()
-    clean = _clean_jackpot1_transition_mask(d, cap)
+    clean = clean_jackpot1_transition_mask(d, cap)
 
     inc1 = j1[1:] - j1[:-1]
     rate = jackpot_revenue_share * jackpot1_share_of_pool
