@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Env / secrets
+.env
+secrets.toml
+
+# Logs
+logs/*.log
+
+# Data exports/cache (nguồn thật nằm trên Neon)
+data/*.csv
+data/*.db
+data/reports/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
