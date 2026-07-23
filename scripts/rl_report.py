@@ -23,7 +23,9 @@ from src.envs.vietlott_gym_env import VietlottEnv
 from src.researcher.policy_analysis import PolicyComparisonReport, classify_bias, compare_to_random_baseline
 from src.researcher.train import DEFAULT_MODEL_PATH, draws_from_dataframe
 
-REPORT_PATH = Path(__file__).resolve().parents[1] / "data" / "reports" / "ai_superstition_report.md"
+# docs/ (khác data/) không bị .gitignore loại — báo cáo cần commit để mọi lần deploy (kể cả
+# Streamlit Cloud, checkout mới) đều có sẵn, không phải retrain mới thấy được.
+REPORT_PATH = Path(__file__).resolve().parents[1] / "docs" / "reports" / "ai_superstition_report.md"
 
 
 def make_trained_policy_fn(model: PPO):

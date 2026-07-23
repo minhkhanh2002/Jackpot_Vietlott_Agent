@@ -27,7 +27,6 @@ if "DATABASE_URL" not in os.environ:
 
 from src.auditor.statistical_tests import (
     chi_square_number_frequency,
-    hit_rate_by_jackpot_size,
     jackpot_rollover_streaks,
     predicted_vs_observed_hit_rate,
     validate_jackpot_split_ratio,
@@ -37,7 +36,7 @@ from src.envs.vietlott_gym_env import NUM_POOL
 from src.optimizer.jackpot_forecast import forecast_next_jackpot
 from src.optimizer.portfolio import average_popularity, recommend_tickets
 
-RL_REPORT_PATH = Path(__file__).resolve().parent / "data" / "reports" / "ai_superstition_report.md"
+RL_REPORT_PATH = Path(__file__).resolve().parent / "docs" / "reports" / "ai_superstition_report.md"
 
 st.set_page_config(page_title="Vietlott Power 6/55 Agent", page_icon="🎰", layout="wide")
 
