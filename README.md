@@ -1,64 +1,101 @@
-# Jackpot Vietlott Agent (Omniverse)
+# Jackpot Vietlott Agent — Power 6/55
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)
 ![Stable Baselines3](https://img.shields.io/badge/RL-Stable%20Baselines%203-purple)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B.svg)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-> **Disclaimer:** This project is for **academic and research purposes only**. It does not guarantee or claim to predict winning lottery numbers. The lottery is a True Random Number Generator system.
+> **Disclaimer:** Dự án phục vụ mục đích **nghiên cứu học thuật**, không dự đoán hay đảm bảo số trúng thưởng — xổ số là hệ thống ngẫu nhiên thật (True Random Number Generator).
 
-**Jackpot Vietlott Agent** là một hệ thống phân tích dữ liệu và AI toàn diện (End-to-End Analytics System) nghiên cứu về xổ số Vietlott (Mega 6/45 & Power 6/55). 
+**Jackpot Vietlott Agent** là hệ thống phân tích dữ liệu và AI cho xổ số **Power 6/55** (đã thu hẹp scope từ dự định ban đầu gồm cả Mega 6/45), gồm 3 hướng nghiên cứu:
 
-Dự án tiếp cận bài toán xổ số dưới lăng kính của Khoa học Dữ liệu (Data Science), Học tăng cường (Reinforcement Learning) và Lý thuyết Trò chơi (Game Theory), được chia làm 3 hướng nghiên cứu chính:
-
-1. **Kiểm toán tính ngẫu nhiên (Randomness Auditor):** Kiểm định thống kê độ tin cậy của cỗ máy quay số.
-2. **Nghiên cứu AI (RL Researcher):** Phân tích hành vi (đặc biệt là sự "mê tín") của các mô hình RL trong môi trường hoàn toàn ngẫu nhiên.
-3. **Tối ưu hóa Kỳ vọng (Game Theory Optimizer):** Phân tích hành vi đám đông để tìm ra các dãy số có giá trị kỳ vọng (Expected Value) cao nhất, giảm thiểu rủi ro chia giải.
+1. **Kiểm toán tính ngẫu nhiên (Auditor):** Chi-square/K-S test trên số quay ra; điều tra định lượng nghi vấn "jackpot lớn dễ nổ hơn" bằng cách suy ngược số vé bán ra từ chính công thức tính Jackpot mà Vietlott công bố, rồi so sánh tỉ lệ nổ dự đoán (mô hình công bằng) với tỉ lệ nổ thực tế quan sát được.
+2. **Nghiên cứu AI (Researcher):** Train PPO trên môi trường Gymnasium mô phỏng việc mua vé qua lịch sử thật; đo entropy + chi-square của phân phối số Agent chọn so với baseline ngẫu nhiên để phát hiện "mê tín" (bias tự học ra dù môi trường không có tín hiệu thật).
+3. **Cố vấn vé (Optimizer):** Dự báo giá trị Jackpot kỳ tới; gợi ý vé né các số "dễ trùng ngày/tháng sinh" (giả định heuristic, không phải dữ liệu thực đo) để giảm rủi ro chia giải — **không** làm tăng xác suất trúng.
 
 ---
 
-## Kiến trúc Hệ thống (Modules)
+## Kiến trúc
 
-Dự án được cấu trúc thành 4 module độc lập và liên kết với nhau qua một nền tảng dữ liệu chung:
+```text
+src/
+├── data_engine/    # scraper (vietlott.vn) + Neon Postgres (bảng vietlott_results) + loader
+├── envs/            # VietlottEnv (Gymnasium) + tính thưởng theo cơ cấu giải chính thức
+├── auditor/         # chi-square, K-S, autocorrelation, ước lượng số vé bán ra, fairness check
+├── optimizer/        # dự báo jackpot + gợi ý vé
+└── researcher/       # train PPO + phân tích entropy/chi-square policy
+scripts/              # backfill.py, update_data.py (cron), rl_report.py
+app.py                # Streamlit showcase
+```
 
-*   **1. Data Engine & Gym Environment:** Scraper tự động cập nhật dữ liệu hàng ngày vào CSDL. Cung cấp môi trường `Vietlott Gym Env` (chuẩn OpenAI Gymnasium) cho các Agent luyện tập.
-*   **2. The Auditor:** Chạy các bài test thống kê phức tạp (Chi-square, K-S test) để chứng minh tính phân bố đồng đều của dữ liệu lịch sử.
-*   **3. The Researcher:** Huấn luyện DQN/PPO trên Gym Env và trích xuất Policy để phân tích khả năng AI bị "overfit" với tập dữ liệu nhiễu.
-*   **4. The Optimizer:** Dự báo quy mô Jackpot và tối ưu hóa Portfolio vé (chọn các bộ số "lạnh" ít người mua) để tối đa hóa EV.
-
----
-
-## Lộ trình Phát triển (Roadmap)
-
-- [ ] **Phase 1:** Xây dựng Data Scraper & Database (SQLite).
-- [ ] **Phase 2:** Phát triển `Vietlott Gym Env` và chạy Thống kê cơ bản.
-- [ ] **Phase 3:** Xây dựng mô hình Game Theory & Dự đoán Jackpot.
-- [ ] **Phase 4:** Tích hợp PyTorch, train tác tử RL và phân tích.
-- [ ] **Phase 5:** Ra mắt Web Dashboard bằng Streamlit.
+Dữ liệu lưu trên **Neon (Postgres serverless, free tier)**, bảng `vietlott_results` — không tự tạo schema, dùng đúng bảng có sẵn từ trước (đã bổ sung kỳ thiếu, không backfill lại từ đầu).
 
 ---
+
+## Lộ trình (đã hoàn thành)
+
+- [x] **Phase 1:** Data Engine — scraper + Neon Postgres + cron cập nhật hàng ngày.
+- [x] **Phase 2:** `VietlottEnv` (Gymnasium) + Auditor (thống kê + điều tra jackpot).
+- [x] **Phase 3:** Optimizer — dự báo jackpot + cố vấn chọn vé.
+- [x] **Phase 4:** RL Researcher — train PPO + báo cáo AI Superstition.
+- [x] **Phase 5:** Streamlit showcase (`app.py`).
 
 ## Tech Stack
 
-*   **Ngôn ngữ:** Python 3.10+
-*   **Data Science:** Pandas, NumPy, SciPy, Scikit-learn
-*   **AI/RL:** PyTorch, Stable Baselines 3, Gymnasium
-*   **Visualization:** Streamlit, Plotly, Seaborn
-*   **Khác:** SQLite, GitHub Actions, BeautifulSoup
+- **Ngôn ngữ:** Python 3.10+
+- **Data/DB:** Pandas, NumPy, SciPy, SQLAlchemy, psycopg (Postgres), Neon
+- **RL:** Gymnasium, Stable-Baselines3, PyTorch (PPO — DQN không tương thích vì action space `MultiDiscrete`)
+- **UI:** Streamlit
+- **Automation:** GitHub Actions, BeautifulSoup
 
 ---
 
-## Cài đặt & Sử dụng (Sắp ra mắt)
-
-*Hướng dẫn cài đặt chi tiết sẽ được cập nhật khi hoàn thành Phase 1.*
+## Cài đặt & Sử dụng
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/Jackpot_Vietlott_Agent.git
+git clone <repo-url>
+cd Jackpot_Vietlott_Agent
 
-# Install dependencies
+python -m venv .venv
+source .venv/Scripts/activate   # Windows Git Bash; dùng .venv\Scripts\activate.bat cho cmd
+
 pip install -r requirements.txt
+
+cp .env.example .env
+# Điền DATABASE_URL (connection string Neon Postgres) vào .env
 ```
 
+Chạy test:
+
+```bash
+pytest
+```
+
+Chạy web app:
+
+```bash
+streamlit run app.py
+```
+
+Train agent RL và sinh báo cáo AI Superstition:
+
+```bash
+python -m src.researcher.train --timesteps 150000
+python scripts/rl_report.py --episodes 5
+```
+
+Cập nhật dữ liệu thủ công (bình thường chạy tự động qua `.github/workflows/update_data.yml`):
+
+```bash
+python scripts/update_data.py
+```
+
+### Deploy
+
+- **Neon:** tạo project free tại [neon.tech](https://neon.tech), lấy connection string.
+- **GitHub Actions:** thêm repo secret `DATABASE_URL` để `update_data.yml` chạy cron hàng ngày.
+- **Streamlit Community Cloud:** deploy từ repo, khai báo `DATABASE_URL` trong mục Secrets của app (`st.secrets`).
+
 ---
-*Dự án được phát triển nhằm mục đích nghiên cứu & xây dựng Portfolio chuyên nghiệp.*
+*Dự án nghiên cứu & xây dựng portfolio Data Engineering / Data Science / RL.*
